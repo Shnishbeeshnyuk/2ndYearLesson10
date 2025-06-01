@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пользователи и посты</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .users-list {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .posts-container {
+            flex: 2;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .user-card {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .user-card:hover {
+            background-color: #f9f9f9;
+        }
+        .user-card.active {
+            background-color: #e3f2fd;
+            border-left: 3px solid #2196f3;
+        }
+        .post-card {
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .post-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .post-body {
+            color: #666;
+        }
+        .search-box {
+            margin-bottom: 20px;
+            padding: 10px;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="users-list">
+            <h2>Пользователи</h2>
+            <input type="text" class="search-box" id="userSearch" placeholder="Поиск пользователей...">
+            <div id="users"></div>
+        </div>
+        <div class="posts-container">
+            <h2>Посты</h2>
+            <input type="text" class="search-box" id="postSearch" placeholder="Поиск по постам...">
+            <div id="posts"></div>
+        </div>
+    </div>
+
+    <script>
+        // DOM элементы
+        const usersContainer = document.getElementById('users');
+        const postsContainer = document.getElementById('posts');
+        const userSearch = document.getElementById('userSearch');
+        const postSearch = document.getElementById('postSearch');
+        
+        // Данные
+        let users = [];
+        let posts = [];
+        let selectedUserId = null;
+        
+        // Загрузка данных
+        async function loadData() {
+            try {
+                const [usersResponse, postsResponse] = await Promise.all([
+                    fetch('./users.json'),
+                    fetch('./posts.json')
+                ]);
+                
+                users = await usersResponse.json();
+                posts = await postsResponse.json();
+                
+                renderUsers(users);
+            } catch (error) {
+                console.error('Ошибка загрузки данных:', error);
+                alert('Не удалось загрузить данные');
+            }
+        }
+        
+        // Отображение пользователей
+        function renderUsers(usersToRender) {
+            usersContainer.innerHTML = '';
+            
+            if (usersToRender.length === 0) {
+                usersContainer.innerHTML = '<p>Пользователи не найдены</p>';
+                return;
+            }
+            
+            usersToRender.forEach(user => {
+                const userCard = document.createElement('div');
+                userCard.className = `user-card ${selectedUserId === user.id ? 'active' : ''}`;
+                userCard.innerHTML = `
+                    <h3>${user.name}</h3>
+                    <p>${user.email}</p>
+                `;
+                
+                userCard.addEventListener('click', () => {
+                    selectedUserId = user.id;
+                    renderUsers(usersToRender);
+                    renderUserPosts(user.id);
+                });
+                
+                usersContainer.appendChild(userCard);
+            });
+        }
+        
+        // Отображение постов пользователя
+        function renderUserPosts(userId) {
+            const userPosts = posts.filter(post => post.userId === userId);
+            
+            // Фильтрация по поисковому запросу
+            const searchTerm = postSearch.value.toLowerCase();
+            const filteredPosts = searchTerm 
+                ? userPosts.filter(post => 
+                    post.title.toLowerCase().includes(searchTerm) || 
+                    post.body.toLowerCase().includes(searchTerm))
+                : userPosts;
+            
+            postsContainer.innerHTML = '';
+            
+            if (filteredPosts.length === 0) {
+                postsContainer.innerHTML = '<p>Посты не найдены</p>';
+                return;
+            }
+            
+            filteredPosts.forEach(post => {
+                const postCard = document.createElement('div');
+                postCard.className = 'post-card';
+                postCard.innerHTML = `
+                    <div class="post-title">${post.title}</div>
+                    <div class="post-body">${post.body}</div>
+                `;
+                postsContainer.appendChild(postCard);
+            });
+        }
+        
+        // Поиск пользователей
+        userSearch.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredUsers = searchTerm 
+                ? users.filter(user => 
+                    user.name.toLowerCase().includes(searchTerm) || 
+                    user.email.toLowerCase().includes(searchTerm))
+                : users;
+            
+            renderUsers(filteredUsers);
+        });
+        
+        // Поиск по постам
+        postSearch.addEventListener('input', () => {
+            if (selectedUserId) {
+                renderUserPosts(selectedUserId);
+            }
+        });
+        
+        // Инициализация
+        loadData();
+    </script>
+</body>
+</html>
