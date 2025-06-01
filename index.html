@@ -6,77 +6,93 @@
     <title>Пользователи и посты</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: #2d2d2d;
+            color: #e0e0e0;
         }
         .container {
             display: flex;
-            gap: 20px;
-            max-width: 1200px;
+            gap: 30px;
+            max-width: 1400px;
             margin: 0 auto;
         }
         .users-list {
             flex: 1;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 15px;
-            max-height: 80vh;
-            overflow-y: auto;
+            background: #3d3d3d;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            padding: 20px;
+            min-width: 350px;
         }
         .posts-container {
             flex: 2;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 15px;
-            max-height: 80vh;
-            overflow-y: auto;
+            background: #3d3d3d;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            padding: 20px;
+            min-width: 600px;
         }
         .user-card {
-            padding: 10px;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #eee;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #4d4d4d;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.3s;
+            border-left: 4px solid #5d5d5d;
         }
         .user-card:hover {
-            background-color: #f9f9f9;
+            background: #5a5a5a;
+            transform: translateX(5px);
         }
         .user-card.active {
-            background-color: #e3f2fd;
-            border-left: 3px solid #2196f3;
+            background: #0066cc;
+            border-left-color: #0099ff;
         }
         .post-card {
-            margin-bottom: 15px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #4d4d4d;
+            border-radius: 8px;
+            border-left: 4px solid #6d6d6d;
         }
         .post-title {
             font-weight: bold;
-            margin-bottom: 8px;
-            color: #333;
+            margin-bottom: 10px;
+            color: #ffffff;
+            font-size: 18px;
         }
         .post-body {
-            color: #666;
+            color: #cccccc;
+            line-height: 1.5;
         }
         .search-box {
             margin-bottom: 20px;
-            padding: 10px;
+            padding: 12px 15px;
             width: 100%;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            background: #4d4d4d;
+            border: 1px solid #5d5d5d;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
         }
         h2 {
             margin-top: 0;
-            color: #333;
+            color: #ffffff;
+            font-size: 24px;
+            border-bottom: 2px solid #5d5d5d;
+            padding-bottom: 10px;
         }
-        @media (max-width: 768px) {
+        @media (max-width: 1000px) {
             .container {
                 flex-direction: column;
+            }
+            .users-list, .posts-container {
+                min-width: auto;
+                width: 100%;
             }
         }
     </style>
@@ -85,12 +101,12 @@
     <div class="container">
         <div class="users-list">
             <h2>Пользователи</h2>
-            <input type="text" class="search-box" id="userSearch" placeholder="Поиск пользователей...">
+            <input type="text" class="search-box" id="userSearch" placeholder="Имя пользователя...">
             <div id="users"></div>
         </div>
         <div class="posts-container">
             <h2>Посты</h2>
-            <input type="text" class="search-box" id="postSearch" placeholder="Поиск по постам...">
+            <input type="text" class="search-box" id="postSearch" placeholder="Текст поста...">
             <div id="posts"></div>
         </div>
     </div>
@@ -111,17 +127,21 @@
         async function loadData() {
             try {
                 const [usersResponse, postsResponse] = await Promise.all([
-                    fetch('./users.json'),
-                    fetch('./posts.json')
+                    fetch('https://jsonplaceholder.typicode.com/users'),
+                    fetch('https://jsonplaceholder.typicode.com/posts')
                 ]);
+                
+                if (!usersResponse.ok || !postsResponse.ok) {
+                    throw new Error('Ошибка загрузки данных');
+                }
                 
                 users = await usersResponse.json();
                 posts = await postsResponse.json();
                 
                 renderUsers(users);
             } catch (error) {
-                console.error('Ошибка загрузки данных:', error);
-                alert('Не удалось загрузить данные');
+                console.error('Ошибка:', error);
+                usersContainer.innerHTML = '<p style="color:#ff5555">Ошибка загрузки данных</p>';
             }
         }
         
@@ -137,14 +157,11 @@
             usersToRender.forEach(user => {
                 const userCard = document.createElement('div');
                 userCard.className = `user-card ${selectedUserId === user.id ? 'active' : ''}`;
-                userCard.innerHTML = `
-                    <h3>${user.name}</h3>
-                    <p>${user.email}</p>
-                `;
+                userCard.innerHTML = `<h3>${user.name}</h3>`;
                 
                 userCard.addEventListener('click', () => {
                     selectedUserId = user.id;
-                    renderUsers(usersToRender);
+                    renderUsers(users);
                     renderUserPosts(user.id);
                 });
                 
@@ -155,14 +172,12 @@
         // Отображение постов пользователя
         function renderUserPosts(userId) {
             const userPosts = posts.filter(post => post.userId === userId);
-            
-            // Фильтрация по поисковому запросу
             const searchTerm = postSearch.value.toLowerCase();
-            const filteredPosts = searchTerm 
-                ? userPosts.filter(post => 
-                    post.title.toLowerCase().includes(searchTerm) || 
-                    post.body.toLowerCase().includes(searchTerm))
-                : userPosts;
+            
+            const filteredPosts = userPosts.filter(post => 
+                post.title.toLowerCase().includes(searchTerm) || 
+                post.body.toLowerCase().includes(searchTerm)
+            );
             
             postsContainer.innerHTML = '';
             
@@ -185,12 +200,9 @@
         // Поиск пользователей
         userSearch.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
-            const filteredUsers = searchTerm 
-                ? users.filter(user => 
-                    user.name.toLowerCase().includes(searchTerm) || 
-                    user.email.toLowerCase().includes(searchTerm))
-                : users;
-            
+            const filteredUsers = users.filter(user => 
+                user.name.toLowerCase().includes(searchTerm)
+            );
             renderUsers(filteredUsers);
         });
         
