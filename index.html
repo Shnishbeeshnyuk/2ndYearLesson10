@@ -14,8 +14,8 @@
         }
         .container {
             display: flex;
-            gap: 30px;
-            max-width: 1400px;
+            gap: 20px;
+            max-width: 1200px;
             margin: 0 auto;
         }
         .users-list {
@@ -23,70 +23,59 @@
             background: #3d3d3d;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            padding: 20px;
-            min-width: 350px;
+            padding: 15px;
+            min-width: 250px;
         }
         .posts-container {
             flex: 2;
             background: #3d3d3d;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            padding: 20px;
-            min-width: 600px;
-        }
-        .user-card {
             padding: 15px;
+            min-width: 0; /* Важно для ограничения ширины */
+        }
+        .search-box {
             margin-bottom: 15px;
+            padding: 8px 12px;
+            width: calc(100% - 24px); /* Учитываем padding */
             background: #4d4d4d;
-            border-radius: 8px;
+            border: 1px solid #5d5d5d;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            box-sizing: border-box; /* Важно для правильного расчёта ширины */
+        }
+        /* Остальные стили остаются без изменений */
+        .user-card {
+            padding: 12px;
+            margin-bottom: 12px;
+            background: #4d4d4d;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.3s;
-            border-left: 4px solid #5d5d5d;
+            border-left: 3px solid #5d5d5d;
         }
         .user-card:hover {
             background: #5a5a5a;
-            transform: translateX(5px);
         }
         .user-card.active {
             background: #0066cc;
             border-left-color: #0099ff;
         }
         .post-card {
-            margin-bottom: 20px;
-            padding: 20px;
+            margin-bottom: 15px;
+            padding: 15px;
             background: #4d4d4d;
-            border-radius: 8px;
-            border-left: 4px solid #6d6d6d;
-        }
-        .post-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #ffffff;
-            font-size: 18px;
-        }
-        .post-body {
-            color: #cccccc;
-            line-height: 1.5;
-        }
-        .search-box {
-            margin-bottom: 20px;
-            padding: 12px 15px;
-            width: 100%;
-            background: #4d4d4d;
-            border: 1px solid #5d5d5d;
-            border-radius: 8px;
-            color: white;
-            font-size: 16px;
-            font-family: 'Comic Sans MS', cursive, sans-serif;
+            border-radius: 6px;
         }
         h2 {
             margin-top: 0;
+            margin-bottom: 15px;
             color: #ffffff;
-            font-size: 24px;
-            border-bottom: 2px solid #5d5d5d;
-            padding-bottom: 10px;
+            font-size: 20px;
         }
-        @media (max-width: 1000px) {
+        @media (max-width: 768px) {
             .container {
                 flex-direction: column;
             }
@@ -101,51 +90,44 @@
     <div class="container">
         <div class="users-list">
             <h2>Пользователи</h2>
-            <input type="text" class="search-box" id="userSearch" placeholder="Имя пользователя...">
+            <input type="text" class="search-box" id="userSearch" placeholder="Поиск...">
             <div id="users"></div>
         </div>
         <div class="posts-container">
             <h2>Посты</h2>
-            <input type="text" class="search-box" id="postSearch" placeholder="Текст поста...">
+            <input type="text" class="search-box" id="postSearch" placeholder="Поиск...">
             <div id="posts"></div>
         </div>
     </div>
 
     <script>
-        // DOM элементы
+        // [JavaScript код остаётся без изменений]
         const usersContainer = document.getElementById('users');
         const postsContainer = document.getElementById('posts');
         const userSearch = document.getElementById('userSearch');
         const postSearch = document.getElementById('postSearch');
         
-        // Данные
         let users = [];
         let posts = [];
         let selectedUserId = null;
         
-        // Загрузка данных
         async function loadData() {
             try {
                 const [usersResponse, postsResponse] = await Promise.all([
-                    fetch('https://jsonplaceholder.typicode.com/users'),
-                    fetch('https://jsonplaceholder.typicode.com/posts')
+                    fetch('./users.json'),
+                    fetch('./posts.json')
                 ]);
-                
-                if (!usersResponse.ok || !postsResponse.ok) {
-                    throw new Error('Ошибка загрузки данных');
-                }
                 
                 users = await usersResponse.json();
                 posts = await postsResponse.json();
                 
                 renderUsers(users);
             } catch (error) {
-                console.error('Ошибка:', error);
-                usersContainer.innerHTML = '<p style="color:#ff5555">Ошибка загрузки данных</p>';
+                console.error('Ошибка загрузки данных:', error);
+                usersContainer.innerHTML = '<p>Ошибка загрузки данных</p>';
             }
         }
         
-        // Отображение пользователей
         function renderUsers(usersToRender) {
             usersContainer.innerHTML = '';
             
@@ -169,7 +151,6 @@
             });
         }
         
-        // Отображение постов пользователя
         function renderUserPosts(userId) {
             const userPosts = posts.filter(post => post.userId === userId);
             const searchTerm = postSearch.value.toLowerCase();
@@ -197,7 +178,6 @@
             });
         }
         
-        // Поиск пользователей
         userSearch.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
             const filteredUsers = users.filter(user => 
@@ -206,14 +186,12 @@
             renderUsers(filteredUsers);
         });
         
-        // Поиск по постам
         postSearch.addEventListener('input', () => {
             if (selectedUserId) {
                 renderUserPosts(selectedUserId);
             }
         });
         
-        // Инициализация
         loadData();
     </script>
 </body>
